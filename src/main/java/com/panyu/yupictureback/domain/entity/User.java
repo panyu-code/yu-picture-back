@@ -39,8 +39,14 @@ public class User implements Serializable {
     /**
      * 昵称
      */
-    @TableField(value = "nick_name")
-    private String nickName;
+    @TableField(value = "nickname")
+    private String nickname;
+
+    /**
+     * 用户头像
+     */
+    @TableField(value = "avatar")
+    private String avatar;
 
     /**
      * 性别(1：男  0：女)
@@ -49,16 +55,28 @@ public class User implements Serializable {
     private Integer gender;
 
     /**
-     * 角色(1：管理员  2：普通用户)
-     */
-    @TableField(value = "role")
-    private Integer role;
-
-    /**
      * 年龄
      */
     @TableField(value = "age")
     private Integer age;
+
+    /**
+     * 手机号
+     */
+    @TableField(value = "phone")
+    private String phone;
+
+    /**
+     * 邮箱
+     */
+    @TableField(value = "email")
+    private String email;
+
+    /**
+     * 角色(1：管理员  2：普通用户)
+     */
+    @TableField(value = "role")
+    private Integer role;
 
     /**
      * 创建时间

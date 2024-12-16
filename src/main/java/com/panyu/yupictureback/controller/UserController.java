@@ -13,6 +13,7 @@ import com.panyu.yupictureback.utils.UserContextUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -41,7 +42,7 @@ public class UserController {
      */
     @ApiOperation("用户注册")
     @PostMapping("/register")
-    public ResponseResult<Long> registerUser(@RequestBody UserRegisterDTO userRegisterDTO) {
+    public ResponseResult<Long> registerUser(@RequestBody @Validated UserRegisterDTO userRegisterDTO) {
         return userService.registerUser(userRegisterDTO);
     }
 
@@ -53,7 +54,7 @@ public class UserController {
      */
     @ApiOperation("用户登录")
     @PostMapping("/login")
-    public ResponseResult<UserLoginVO> doLogin(@RequestBody UserLoginDTO userLoginDTO, HttpServletRequest request) {
+    public ResponseResult<UserLoginVO> doLogin(@RequestBody @Validated UserLoginDTO userLoginDTO, HttpServletRequest request) {
         return userService.doLogin(userLoginDTO, request);
     }
 

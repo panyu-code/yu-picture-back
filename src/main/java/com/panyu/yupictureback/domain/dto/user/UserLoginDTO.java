@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 
 /**
@@ -22,11 +23,13 @@ public class UserLoginDTO implements Serializable {
      * 用户名(账号)
      */
     @ApiModelProperty("用户名")
+    @NotBlank
     private String username;
 
     /**
      * 密码
      */
+    @NotBlank
     @ApiModelProperty("密码")
     private String password;
 

@@ -1,5 +1,6 @@
 package com.panyu.yupictureback.enums;
 
+import cn.hutool.core.util.ObjectUtil;
 import lombok.Getter;
 
 /**
@@ -24,5 +25,33 @@ public enum UserRoleEnum {
     UserRoleEnum(String key, Integer value) {
         this.key = key;
         this.value = value;
+    }
+
+    /**
+     * 是否是管理员
+     *
+     * @param userRole
+     * @return
+     */
+    public static boolean isAdmin(Integer userRole) {
+        return ADMIN.getValue().equals(userRole);
+    }
+
+    /**
+     * 根据对应值获取枚举
+     *
+     * @param value
+     * @return
+     */
+    public static UserRoleEnum getEnumByValue(Integer value) {
+        if (ObjectUtil.isEmpty(value)) {
+            return null;
+        }
+        for (UserRoleEnum anEnum : UserRoleEnum.values()) {
+            if (anEnum.value.equals(value)) {
+                return anEnum;
+            }
+        }
+        return null;
     }
 }

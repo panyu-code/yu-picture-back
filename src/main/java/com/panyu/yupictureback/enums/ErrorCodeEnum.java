@@ -11,9 +11,9 @@ import lombok.Getter;
 public enum ErrorCodeEnum {
     SUCCESS(0, "ok"),
     PARAMS_ERROR(40000, "请求参数错误！"),
-    PARAMS_NOT_VALID(40001, "请求参数不合法！"),
-    NOT_LOGIN_ERROR(40100, "未登录！"),
-    NO_AUTH_ERROR(40101, "无权限！"),
+    PARAMS_NOT_VALID(40001, "输入的参数不合法！"),
+    NOT_LOGIN_ERROR(40100, "未登录，请先登录！"),
+    NO_AUTH_ERROR(40101, "暂无权限，请联系管理员！"),
     NOT_FOUND_ERROR(40400, "请求数据不存在！"),
     FORBIDDEN_ERROR(40300, "禁止访问！"),
     SYSTEM_ERROR(50000, "系统内部异常！"),
