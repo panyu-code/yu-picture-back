@@ -10,6 +10,11 @@ public class ResultUtil {
     private ResultUtil() {
     }
 
+
+    public static <T> ResponseResult<T> success() {
+        return new ResponseResult<>(0, "ok");
+    }
+
     /**
      * 成功
      *

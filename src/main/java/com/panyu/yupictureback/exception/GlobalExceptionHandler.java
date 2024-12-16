@@ -15,7 +15,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
-
+    /**
+     * 业务异常
+     *
+     * @param e
+     * @return
+     */
     @ExceptionHandler(BusinessException.class)
     public ResponseResult<?> businessExceptionHandler(BusinessException e) {
         log.error("BusinessException", e);

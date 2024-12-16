@@ -3,13 +3,16 @@ package com.panyu.yupictureback.exception;
 import com.panyu.yupictureback.enums.ErrorCodeEnum;
 import lombok.Getter;
 
+import java.io.Serializable;
+
 /**
  * @author: YuPan
  * @Desc: 业务异常
  * @create: 2024-12-08 16:27
  **/
 @Getter
-public class BusinessException extends RuntimeException {
+public class BusinessException extends RuntimeException implements Serializable {
+    private static final long serialVersionUID = -5965838987005582927L;
     /**
      * 错误码
      */

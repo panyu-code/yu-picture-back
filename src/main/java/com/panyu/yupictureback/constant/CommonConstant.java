@@ -10,7 +10,16 @@ public class CommonConstant {
     private CommonConstant() {
     }
 
+    /**
+     * 升序
+     */
     public static final String SORT_ORDER_ASC = "asc";
-
+    /**
+     * 降序
+     */
     public static final String SORT_ORDER_DESC = "desc";
+    /**
+     * 当前登录用户
+     */
+    public static final String LOGIN_USER = "loginUser";
 }
