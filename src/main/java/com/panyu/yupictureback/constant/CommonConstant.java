@@ -22,4 +22,6 @@ public class CommonConstant {
      * 当前登录用户
      */
     public static final String LOGIN_USER = "loginUser";
+
+    public static final String DEFAULT_PASSWORD = "123456";
 }

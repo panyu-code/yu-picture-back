@@ -14,4 +14,7 @@ public class YuPictureBackApplication {
         SpringApplication.run(YuPictureBackApplication.class, args);
     }
 
+
+
+
 }

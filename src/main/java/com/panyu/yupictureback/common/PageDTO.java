@@ -1,10 +1,10 @@
 package com.panyu.yupictureback.common;
 
-import com.panyu.yupictureback.constant.CommonConstant;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 /**
@@ -20,24 +20,15 @@ public class PageDTO implements Serializable {
     /**
      * 当前页号
      */
+    @NotNull
     @ApiModelProperty("当前页号")
-    private int current = 1;
+    private int current;
 
     /**
      * 页面大小
      */
+    @NotNull
     @ApiModelProperty("当前页码")
-    private int pageSize = 10;
+    private int pageSize;
 
-    /**
-     * 排序字段
-     */
-    @ApiModelProperty("排序字段")
-    private String sortField;
-
-    /**
-     * 排序顺序（默认升序）
-     */
-    @ApiModelProperty("排序方式")
-    private String sortOrder = CommonConstant.SORT_ORDER_ASC;
 }

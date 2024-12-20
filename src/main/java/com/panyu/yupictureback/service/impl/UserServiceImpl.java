@@ -1,15 +1,20 @@
 package com.panyu.yupictureback.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.panyu.yupictureback.common.ResponseResult;
 import com.panyu.yupictureback.constant.CommonConstant;
-import com.panyu.yupictureback.domain.dto.user.UserLoginDTO;
-import com.panyu.yupictureback.domain.dto.user.UserRegisterDTO;
+import com.panyu.yupictureback.domain.dto.user.*;
 import com.panyu.yupictureback.domain.entity.User;
+import com.panyu.yupictureback.domain.vo.user.UserListVO;
 import com.panyu.yupictureback.domain.vo.user.UserLoginVO;
 import com.panyu.yupictureback.enums.ErrorCodeEnum;
+import com.panyu.yupictureback.exception.BusinessException;
 import com.panyu.yupictureback.mapper.UserMapper;
 import com.panyu.yupictureback.service.UserService;
 import com.panyu.yupictureback.utils.EncryptUtil;
@@ -17,9 +22,13 @@ import com.panyu.yupictureback.utils.ResultUtil;
 import com.panyu.yupictureback.utils.ThrowUtil;
 import com.panyu.yupictureback.utils.UserContextUtil;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * @author yupan
@@ -27,8 +36,7 @@ import javax.servlet.http.HttpServletRequest;
  * @createDate 2024-12-14 18:50:15
  */
 @Service
-public class UserServiceImpl extends ServiceImpl<UserMapper, User>
-        implements UserService {
+public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
     @Resource
     private UserMapper userMapper;
 
@@ -44,12 +52,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         String password = userRegisterDTO.getPassword();
         String rePassword = userRegisterDTO.getRePassword();
         //检验用户名是否重复（根据用户名去数据库查询，若能查到，则说明重复）
-        User user = userMapper.selectOne(new LambdaQueryWrapper<User>()
-                .eq(User::getUsername, username));
+        User user = userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
         ThrowUtil.throwIf(user != null, ErrorCodeEnum.PARAMS_ERROR, "该用户名已存在！");
         // 校验密码
-        ThrowUtil.throwIf(!password.equals(rePassword),
-                ErrorCodeEnum.PARAMS_ERROR, "两次输入的密码不正确！");
+        ThrowUtil.throwIf(!password.equals(rePassword), ErrorCodeEnum.PARAMS_ERROR, "两次输入的密码不正确！");
         // 加密密码
         String encryptPassword = EncryptUtil.encryptPassword(password);
         // 插入
@@ -71,13 +77,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     public ResponseResult<UserLoginVO> doLogin(UserLoginDTO userLoginDTO, HttpServletRequest request) {
         String username = userLoginDTO.getUsername();
         String password = userLoginDTO.getPassword();
-        User user = userMapper.selectOne(new LambdaQueryWrapper<User>()
-                .eq(User::getUsername, username));
+        User user = userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
         // 判断有没有这个用户
         ThrowUtil.throwIf(user == null, ErrorCodeEnum.PARAMS_ERROR, "用户名或密码错误！");
         // 判断密码是否正确
-        ThrowUtil.throwIf(!EncryptUtil.encryptPassword(password).equals(user.getPassword()),
-                ErrorCodeEnum.PARAMS_ERROR, "用户名或密码错误！");
+        ThrowUtil.throwIf(!EncryptUtil.encryptPassword(password).equals(user.getPassword()), ErrorCodeEnum.PARAMS_ERROR, "用户名或密码错误！");
         // 脱敏
         UserLoginVO currentUser = BeanUtil.copyProperties(user, UserLoginVO.class);
         // 将用户信息存入用户上下文中
@@ -85,6 +89,97 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         // 存入session
         request.getSession().setAttribute(CommonConstant.LOGIN_USER, currentUser);
         return ResultUtil.success(currentUser);
+    }
+
+    /**
+     * 新增用户
+     *
+     * @param userAddDTO
+     * @return
+     */
+    @Override
+    public ResponseResult<Boolean> addUser(UserAddDTO userAddDTO) {
+        String username = userAddDTO.getUsername();
+        User user = userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
+        ThrowUtil.throwIf(user != null, ErrorCodeEnum.PARAMS_ERROR, "该用户名已存在！");
+        userMapper.insert(new User().setUsername(username).setPassword(EncryptUtil.encryptPassword(CommonConstant.DEFAULT_PASSWORD)));
+        return ResultUtil.success(true);
+    }
+
+    /**
+     * 更新用户
+     *
+     * @param userUpdateDTO
+     * @return
+     */
+    @Override
+    public ResponseResult<Boolean> updateUser(UserUpdateDTO userUpdateDTO) {
+        String username = userUpdateDTO.getUsername();
+        // 根据id查询用户
+        User user = Optional.ofNullable(userMapper.selectById(userUpdateDTO.getId())).orElseThrow(() -> new BusinessException(ErrorCodeEnum.PARAMS_ERROR, "用户不存在！"));
+        if (CharSequenceUtil.isNotBlank(username)) {
+            // 根据用户名查询用户
+            User userByName = userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
+            ThrowUtil.throwIf(userByName != null && !userByName.getId().equals(user.getId()), ErrorCodeEnum.PARAMS_ERROR, "该用户名已存在！");
+        } else {
+            userUpdateDTO.setUsername(user.getUsername());
+        }
+        userMapper.update(BeanUtil.copyProperties(userUpdateDTO, User.class), new LambdaQueryWrapper<User>().eq(User::getId,
+                user.getId()));
+        return ResultUtil.success(true);
+    }
+
+    @Override
+    @Transactional
+    public ResponseResult<Boolean> deleteUser(List<Long> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            throw new BusinessException(ErrorCodeEnum.PARAMS_ERROR);
+        }
+        List<User> users = userMapper.selectByIds(ids);
+        if (CollUtil.isEmpty(users)) {
+            throw new BusinessException(ErrorCodeEnum.PARAMS_ERROR, "要删除的用户不存在！");
+        }
+        userMapper.deleteByIds(ids);
+        return ResultUtil.success(true);
+    }
+
+    /**
+     * 查询用户列表
+     *
+     * @param userQueryDTO
+     * @return
+     */
+    @Override
+    public ResponseResult<Page<UserListVO>> listUser(UserQueryDTO userQueryDTO) {
+        long current = userQueryDTO.getCurrent();
+        long pageSize = userQueryDTO.getPageSize();
+        LocalDateTime createTimeFrom = userQueryDTO.getCreateTimeFrom();
+        LocalDateTime createTimeTo = userQueryDTO.getCreateTimeTo();
+        Page<User> page = new Page<>(current, pageSize);
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<User>()
+                .likeRight(CharSequenceUtil.isNotBlank(userQueryDTO.getUsername()), User::getUsername,
+                        userQueryDTO.getUsername())
+                .like(CharSequenceUtil.isNotBlank(userQueryDTO.getNickname()), User::getNickname, userQueryDTO.getNickname())
+                .ge(ObjectUtil.isNotEmpty(userQueryDTO.getCreateTimeFrom()), User::getCreateTime, createTimeFrom)
+                .le(ObjectUtil.isNotEmpty(userQueryDTO.getCreateTimeTo()), User::getCreateTime, createTimeTo)
+                .orderByDesc(User::getCreateTime);
+        Page<User> userPage = userMapper.selectPage(page, queryWrapper);
+        long total = userPage.getTotal();
+        Page<UserListVO> pageVO = new Page<>(current, pageSize, total);
+        pageVO.setRecords(BeanUtil.copyToList(userPage.getRecords(), UserListVO.class));
+        return ResultUtil.success(pageVO);
+    }
+
+    @Override
+    public ResponseResult<User> getUserById(Long id) {
+        if (ObjectUtil.isEmpty(id)) {
+            throw new BusinessException(ErrorCodeEnum.PARAMS_ERROR);
+        }
+        User user = userMapper.selectById(id);
+        if (ObjectUtil.isEmpty(user)) {
+            throw new BusinessException(ErrorCodeEnum.PARAMS_ERROR, "用户不存在！");
+        }
+        return ResultUtil.success(user);
     }
 }
 

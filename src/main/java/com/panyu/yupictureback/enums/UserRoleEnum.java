@@ -19,6 +19,14 @@ public enum UserRoleEnum {
      */
     COMMON_USER("common_user", 2);
 
+
+
+
+
+
+
+
+
     private final String key;
     private final Integer value;
 
@@ -49,6 +57,18 @@ public enum UserRoleEnum {
         }
         for (UserRoleEnum anEnum : UserRoleEnum.values()) {
             if (anEnum.value.equals(value)) {
+                return anEnum;
+            }
+        }
+        return null;
+    }
+
+    public static UserRoleEnum getEnumByKey(String key) {
+        if (ObjectUtil.isEmpty(key)) {
+            return null;
+        }
+        for (UserRoleEnum anEnum : UserRoleEnum.values()) {
+            if (anEnum.key.equals(key)) {
                 return anEnum;
             }
         }

@@ -1,13 +1,15 @@
 package com.panyu.yupictureback.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.panyu.yupictureback.common.ResponseResult;
-import com.panyu.yupictureback.domain.dto.user.UserLoginDTO;
-import com.panyu.yupictureback.domain.dto.user.UserRegisterDTO;
+import com.panyu.yupictureback.domain.dto.user.*;
 import com.panyu.yupictureback.domain.entity.User;
+import com.panyu.yupictureback.domain.vo.user.UserListVO;
 import com.panyu.yupictureback.domain.vo.user.UserLoginVO;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
  * @author yupan
@@ -31,4 +33,43 @@ public interface UserService extends IService<User> {
      * @return
      */
     ResponseResult<UserLoginVO> doLogin(UserLoginDTO userLoginDTO, HttpServletRequest request);
+
+    /**
+     * 新增用户
+     *
+     * @param userAddDTO
+     * @return
+     */
+    ResponseResult<Boolean> addUser(UserAddDTO userAddDTO);
+
+    /**
+     * 修改用户
+     *
+     * @param userUpdateDTO
+     * @return
+     */
+    ResponseResult<Boolean> updateUser(UserUpdateDTO userUpdateDTO);
+
+    /**
+     * 删除用户
+     *
+     * @param ids
+     * @return
+     */
+    ResponseResult<Boolean> deleteUser(List<Long> ids);
+
+    /**
+     * 查询用户列表
+     *
+     * @param userQueryDTO
+     * @return
+     */
+    ResponseResult<Page<UserListVO>> listUser(UserQueryDTO userQueryDTO);
+
+    /**
+     * 根据id获取用户完整信息
+     * @param id
+     * @return
+     */
+    ResponseResult<User> getUserById(Long id);
 }

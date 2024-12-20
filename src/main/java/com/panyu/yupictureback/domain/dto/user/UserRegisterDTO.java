@@ -2,7 +2,9 @@ package com.panyu.yupictureback.domain.dto.user;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import javax.validation.constraints.Pattern;
@@ -14,9 +16,11 @@ import java.io.Serializable;
  * @Desc: 用户注册DTO
  * @create: 2024-12-14 18:56
  **/
+@ApiModel("用户注册DTO")
 @Data
 @Accessors(chain = true)
-@ApiModel("用户注册DTO")
+@AllArgsConstructor
+@NoArgsConstructor
 public class UserRegisterDTO implements Serializable {
 
     private static final long serialVersionUID = -417362913792638993L;

@@ -1,7 +1,9 @@
 package com.panyu.yupictureback.domain.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
@@ -15,6 +17,8 @@ import java.time.LocalDateTime;
 @TableName(value = "user")
 @Data
 @Accessors(chain = true)
+@AllArgsConstructor
+@NoArgsConstructor
 public class User implements Serializable {
     @TableField(exist = false)
     private static final long serialVersionUID = 6109355686803105166L;
@@ -85,7 +89,7 @@ public class User implements Serializable {
     private LocalDateTime createTime;
 
     /**
-     *
+     * 修改时间
      */
     @TableField(value = "update_time")
     private LocalDateTime updateTime;

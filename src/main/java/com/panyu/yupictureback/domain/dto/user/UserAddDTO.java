@@ -7,34 +7,25 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
-import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 
 /**
  * @author: YuPan
- * @Desc:
- * @create: 2024-12-14 20:20
+ * @Desc: 管理员权限
+ * @create: 2024-12-20 22:03
  **/
-@ApiModel("用户登录DTO")
+@ApiModel("新增用户DTO")
 @Data
 @Accessors(chain = true)
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserLoginDTO implements Serializable {
-    private static final long serialVersionUID = -7383552998314109572L;
+public class UserAddDTO implements Serializable {
 
-    /**
-     * 用户名(账号)
-     */
+    private static final long serialVersionUID = -3446676553781421068L;
+
     @ApiModelProperty("用户名")
-    @NotBlank
+    @Size(min = 2, max = 10, message = "用户名长度为2-10位")
     private String username;
-
-    /**
-     * 密码
-     */
-    @NotBlank
-    @ApiModelProperty("密码")
-    private String password;
 
 }
