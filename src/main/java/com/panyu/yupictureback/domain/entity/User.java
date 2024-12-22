@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
 
 /**
  * 用户表
@@ -86,13 +85,13 @@ public class User implements Serializable {
      * 创建时间
      */
     @TableField(value = "create_time")
-    private LocalDateTime createTime;
+    private String createTime;
 
     /**
      * 修改时间
      */
     @TableField(value = "update_time")
-    private LocalDateTime updateTime;
+    private String updateTime;
 
     /**
      * 是否删除

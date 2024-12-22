@@ -1,0 +1,24 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: yupicture-back
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/yu_picture?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: 123456
+
+logging:
+  level:
+    root: info
+    com.panyu.yupictureback.mapper: debug
+
+# 对象存储配置（需要从腾讯云获取）
+cos:
+  client:
+    host: https://yu-picture-1331468284.cos.ap-shanghai.myqcloud.com
+    secretId: AKIDLo9KK9pHZgdS6ZsxQo6DRrNp7C9uUrDa
+    secretKey: TkolaHoDUgmtrc9ar4JlDg19EC0b5Oab
+    region: ap-shanghai
+    bucket: yu-picture-1331468284

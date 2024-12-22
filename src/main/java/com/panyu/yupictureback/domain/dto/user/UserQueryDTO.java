@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
 
 /**
  * @author: YuPan
@@ -28,7 +27,5 @@ public class UserQueryDTO extends PageDTO implements Serializable {
 
     private String nickname;
 
-    private LocalDateTime createTimeFrom;
-
-    private LocalDateTime createTimeTo;
+    private String[] createTimeRange;
 }

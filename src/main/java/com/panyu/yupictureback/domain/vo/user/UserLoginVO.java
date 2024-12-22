@@ -39,7 +39,7 @@ public class UserLoginVO implements Serializable {
      * 昵称
      */
     @ApiModelProperty("昵称")
-    private String nickName;
+    private String nickname;
 
     /**
      * 性别(1：男  0：女)

@@ -3,18 +3,12 @@ package com.panyu.yupictureback.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.panyu.yupictureback.annotation.AuthCheck;
 import com.panyu.yupictureback.common.ResponseResult;
-import com.panyu.yupictureback.constant.CommonConstant;
 import com.panyu.yupictureback.domain.dto.user.*;
 import com.panyu.yupictureback.domain.entity.User;
 import com.panyu.yupictureback.domain.vo.user.UserListVO;
 import com.panyu.yupictureback.domain.vo.user.UserLoginVO;
-import com.panyu.yupictureback.enums.ErrorCodeEnum;
 import com.panyu.yupictureback.enums.UserRoleEnum;
 import com.panyu.yupictureback.service.UserService;
-import com.panyu.yupictureback.utils.ResultUtil;
-import com.panyu.yupictureback.utils.ThrowUtil;
-import com.panyu.yupictureback.utils.UserContextUtil;
-import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -32,7 +26,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/user")
 @Slf4j
-@Api(tags = "用户请求类")
 public class UserController {
 
     @Resource
@@ -55,21 +48,15 @@ public class UserController {
 
     @ApiOperation("退出登录")
     @PostMapping("/logout")
-    public ResponseResult<Void> doLogout(HttpServletRequest request) {
-        UserLoginVO currentUser = UserContextUtil.getCurrentUser();
-        ThrowUtil.throwIf(currentUser == null, ErrorCodeEnum.NOT_LOGIN_ERROR);
-        UserContextUtil.removeCurrentUser();
-        request.getSession().removeAttribute(CommonConstant.LOGIN_USER);
-        return ResultUtil.success();
+    public ResponseResult<Boolean> doLogout(HttpServletRequest request) {
+        return userService.doLogout(request);
     }
 
 
     @ApiOperation("获取当前登录用户")
     @GetMapping("/current")
     public ResponseResult<UserLoginVO> getCurrentUser() {
-        UserLoginVO currentUser = UserContextUtil.getCurrentUser();
-        ThrowUtil.throwIf(currentUser == null, ErrorCodeEnum.NOT_LOGIN_ERROR);
-        return ResultUtil.success();
+        return userService.getCurrentUser();
     }
 
     @AuthCheck(mustRole = UserRoleEnum.ADMIN)

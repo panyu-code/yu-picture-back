@@ -68,8 +68,24 @@ public interface UserService extends IService<User> {
 
     /**
      * 根据id获取用户完整信息
+     *
      * @param id
      * @return
      */
     ResponseResult<User> getUserById(Long id);
+
+    /**
+     * 获取当前登录用户信息
+     *
+     * @return
+     */
+    ResponseResult<UserLoginVO> getCurrentUser();
+
+    /**
+     * 退出登录
+     *
+     * @param request
+     * @return
+     */
+    ResponseResult<Boolean> doLogout(HttpServletRequest request);
 }

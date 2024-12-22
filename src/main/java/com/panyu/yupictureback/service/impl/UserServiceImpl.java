@@ -26,7 +26,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -84,8 +83,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         ThrowUtil.throwIf(!EncryptUtil.encryptPassword(password).equals(user.getPassword()), ErrorCodeEnum.PARAMS_ERROR, "用户名或密码错误！");
         // 脱敏
         UserLoginVO currentUser = BeanUtil.copyProperties(user, UserLoginVO.class);
-        // 将用户信息存入用户上下文中
-        UserContextUtil.setCurrentUser(currentUser);
         // 存入session
         request.getSession().setAttribute(CommonConstant.LOGIN_USER, currentUser);
         return ResultUtil.success(currentUser);
@@ -117,13 +114,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         String username = userUpdateDTO.getUsername();
         // 根据id查询用户
         User user = Optional.ofNullable(userMapper.selectById(userUpdateDTO.getId())).orElseThrow(() -> new BusinessException(ErrorCodeEnum.PARAMS_ERROR, "用户不存在！"));
-        if (CharSequenceUtil.isNotBlank(username)) {
-            // 根据用户名查询用户
-            User userByName = userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
-            ThrowUtil.throwIf(userByName != null && !userByName.getId().equals(user.getId()), ErrorCodeEnum.PARAMS_ERROR, "该用户名已存在！");
-        } else {
-            userUpdateDTO.setUsername(user.getUsername());
-        }
+        // 根据用户名查询用户
+        User userByName = userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
+        ThrowUtil.throwIf(userByName != null && !userByName.getId().equals(user.getId()), ErrorCodeEnum.PARAMS_ERROR, "该用户名已存在！");
         userMapper.update(BeanUtil.copyProperties(userUpdateDTO, User.class), new LambdaQueryWrapper<User>().eq(User::getId,
                 user.getId()));
         return ResultUtil.success(true);
@@ -153,15 +146,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public ResponseResult<Page<UserListVO>> listUser(UserQueryDTO userQueryDTO) {
         long current = userQueryDTO.getCurrent();
         long pageSize = userQueryDTO.getPageSize();
-        LocalDateTime createTimeFrom = userQueryDTO.getCreateTimeFrom();
-        LocalDateTime createTimeTo = userQueryDTO.getCreateTimeTo();
+        String createTimeFrom = "";
+        String createTimeTo = "";
+        if (userQueryDTO.getCreateTimeRange() != null && userQueryDTO.getCreateTimeRange().length == 2) {
+            createTimeFrom = userQueryDTO.getCreateTimeRange()[0];
+            createTimeTo = userQueryDTO.getCreateTimeRange()[1];
+        }
         Page<User> page = new Page<>(current, pageSize);
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<User>()
                 .likeRight(CharSequenceUtil.isNotBlank(userQueryDTO.getUsername()), User::getUsername,
                         userQueryDTO.getUsername())
                 .like(CharSequenceUtil.isNotBlank(userQueryDTO.getNickname()), User::getNickname, userQueryDTO.getNickname())
-                .ge(ObjectUtil.isNotEmpty(userQueryDTO.getCreateTimeFrom()), User::getCreateTime, createTimeFrom)
-                .le(ObjectUtil.isNotEmpty(userQueryDTO.getCreateTimeTo()), User::getCreateTime, createTimeTo)
+                .ge(ObjectUtil.isNotEmpty(createTimeFrom), User::getCreateTime, createTimeFrom)
+                .le(ObjectUtil.isNotEmpty(createTimeTo), User::getCreateTime, createTimeTo)
+                .orderByAsc(User::getRole)
                 .orderByDesc(User::getCreateTime);
         Page<User> userPage = userMapper.selectPage(page, queryWrapper);
         long total = userPage.getTotal();
@@ -180,6 +178,22 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(ErrorCodeEnum.PARAMS_ERROR, "用户不存在！");
         }
         return ResultUtil.success(user);
+    }
+
+    @Override
+    public ResponseResult<UserLoginVO> getCurrentUser() {
+        UserLoginVO currentUser = UserContextUtil.getCurrentUser();
+        ThrowUtil.throwIf(currentUser == null, ErrorCodeEnum.NOT_LOGIN_ERROR);
+        return ResultUtil.success(currentUser);
+    }
+
+    @Override
+    public ResponseResult<Boolean> doLogout(HttpServletRequest request) {
+        UserLoginVO currentUser = UserContextUtil.getCurrentUser();
+        ThrowUtil.throwIf(currentUser == null, ErrorCodeEnum.NOT_LOGIN_ERROR);
+//        UserContextUtil.removeCurrentUser();
+        request.getSession().removeAttribute(CommonConstant.LOGIN_USER);
+        return ResultUtil.success(true);
     }
 }
 
