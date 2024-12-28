@@ -11,7 +11,7 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.RandomUtil;
 import com.panyu.yupictureback.config.CosClientConfig;
-import com.panyu.yupictureback.domain.dto.file.UploadPictureResult;
+import com.panyu.yupictureback.domain.dto.picture.PictureUploadDTO;
 import com.panyu.yupictureback.enums.ErrorCodeEnum;
 import com.panyu.yupictureback.exception.BusinessException;
 import com.panyu.yupictureback.utils.ThrowUtil;
@@ -42,7 +42,7 @@ public class FileManager {
      * @param uploadPathPrefix 上传路径前缀
      * @return
      */
-    public UploadPictureResult uploadPicture(MultipartFile multipartFile, String uploadPathPrefix) {
+    public PictureUploadDTO uploadPicture(MultipartFile multipartFile, String uploadPathPrefix) {
         // 校验图片
         validPicture(multipartFile);
         // 图片上传地址
@@ -62,7 +62,7 @@ public class FileManager {
             PutObjectResult putObjectResult = cosManager.putPictureObject(uploadPath, file);
             ImageInfo imageInfo = putObjectResult.getCiUploadResult().getOriginalInfo().getImageInfo();
             // 封装返回结果
-            UploadPictureResult uploadPictureResult = new UploadPictureResult();
+            PictureUploadDTO uploadPictureResult = new PictureUploadDTO();
             int picWidth = imageInfo.getWidth();
             int picHeight = imageInfo.getHeight();
             double picScale = NumberUtil.round(picWidth * 1.0 / picHeight, 2).doubleValue();

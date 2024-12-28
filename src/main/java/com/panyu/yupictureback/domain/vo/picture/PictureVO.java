@@ -53,27 +53,27 @@ public class PictureVO implements Serializable {
     /**
      * 文件体积
      */
-    private Long picSize;
+    private Long size;
 
     /**
      * 图片宽度
      */
-    private Integer picWidth;
+    private Integer width;
 
     /**
      * 图片高度
      */
-    private Integer picHeight;
+    private Integer height;
 
     /**
      * 图片比例
      */
-    private Double picScale;
+    private Double scale;
 
     /**
      * 图片格式
      */
-    private String picFormat;
+    private String format;
 
     /**
      * 用户 id

@@ -111,5 +111,7 @@ public class Picture implements Serializable {
     @TableField(value = "is_delete")
     private Integer isDelete;
 
+    @TableField(exist = false)
+    private String username;
 
 }

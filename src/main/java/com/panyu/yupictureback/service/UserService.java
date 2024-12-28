@@ -88,4 +88,14 @@ public interface UserService extends IService<User> {
      * @return
      */
     ResponseResult<Boolean> doLogout(HttpServletRequest request);
+
+    /**
+     * 判断是否为管理员
+     *
+     * @param user
+     * @return
+     */
+    boolean isAdmin(UserLoginVO user);
+
+
 }

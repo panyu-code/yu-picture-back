@@ -14,6 +14,7 @@ import com.panyu.yupictureback.domain.entity.User;
 import com.panyu.yupictureback.domain.vo.user.UserListVO;
 import com.panyu.yupictureback.domain.vo.user.UserLoginVO;
 import com.panyu.yupictureback.enums.ErrorCodeEnum;
+import com.panyu.yupictureback.enums.UserRoleEnum;
 import com.panyu.yupictureback.exception.BusinessException;
 import com.panyu.yupictureback.mapper.UserMapper;
 import com.panyu.yupictureback.service.UserService;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -191,10 +193,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public ResponseResult<Boolean> doLogout(HttpServletRequest request) {
         UserLoginVO currentUser = UserContextUtil.getCurrentUser();
         ThrowUtil.throwIf(currentUser == null, ErrorCodeEnum.NOT_LOGIN_ERROR);
-//        UserContextUtil.removeCurrentUser();
+        // UserContextUtil.removeCurrentUser();
         request.getSession().removeAttribute(CommonConstant.LOGIN_USER);
         return ResultUtil.success(true);
     }
+
+    @Override
+    public boolean isAdmin(UserLoginVO user) {
+        return ObjectUtil.isNotNull(user) && ObjectUtil.isNotNull(user.getRole()) && Objects.equals(user.getRole(), UserRoleEnum.ADMIN.getValue());
+    }
+
+
+
+
 }
 
 

@@ -1,4 +1,4 @@
-package com.panyu.yupictureback.domain.dto.file;
+package com.panyu.yupictureback.domain.dto.picture;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -12,8 +12,7 @@ import java.io.Serializable;
  **/
 @Data
 @Accessors(chain = true)
-public class UploadPictureResult implements Serializable {
-
+public class PictureUploadDTO implements Serializable {
 
     private static final long serialVersionUID = 5525856739220528439L;
     /**
