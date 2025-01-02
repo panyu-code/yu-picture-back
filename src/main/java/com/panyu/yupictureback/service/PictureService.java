@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.panyu.yupictureback.common.ResponseResult;
 import com.panyu.yupictureback.domain.dto.picture.PictureEditDTO;
 import com.panyu.yupictureback.domain.dto.picture.PictureQueryDTO;
+import com.panyu.yupictureback.domain.dto.picture.PictureReviewDTO;
 import com.panyu.yupictureback.domain.dto.picture.PictureUpdateDTO;
 import com.panyu.yupictureback.domain.entity.Picture;
 import com.panyu.yupictureback.domain.vo.picture.PictureTagCategoryVO;
@@ -124,5 +125,14 @@ public interface PictureService extends IService<Picture> {
      */
     void validPicture(Picture picture);
 
+    /**
+     * 图片审核
+     *
+     * @param pictureReviewRequest
+     * @param loginUser
+     */
+    void doPictureReview(PictureReviewDTO pictureReviewRequest, UserLoginVO loginUser);
 
+
+    void fillReviewParams(Picture picture, UserLoginVO loginUser);
 }

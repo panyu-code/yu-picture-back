@@ -5,14 +5,18 @@ import com.panyu.yupictureback.annotation.AuthCheck;
 import com.panyu.yupictureback.common.ResponseResult;
 import com.panyu.yupictureback.domain.dto.picture.PictureEditDTO;
 import com.panyu.yupictureback.domain.dto.picture.PictureQueryDTO;
+import com.panyu.yupictureback.domain.dto.picture.PictureReviewDTO;
 import com.panyu.yupictureback.domain.dto.picture.PictureUpdateDTO;
 import com.panyu.yupictureback.domain.entity.Picture;
 import com.panyu.yupictureback.domain.vo.picture.PictureTagCategoryVO;
 import com.panyu.yupictureback.domain.vo.picture.PictureVO;
 import com.panyu.yupictureback.domain.vo.user.UserLoginVO;
+import com.panyu.yupictureback.enums.ErrorCodeEnum;
 import com.panyu.yupictureback.enums.UserRoleEnum;
 import com.panyu.yupictureback.service.PictureService;
 import com.panyu.yupictureback.service.UserService;
+import com.panyu.yupictureback.utils.ResultUtil;
+import com.panyu.yupictureback.utils.ThrowUtil;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -38,7 +42,6 @@ public class PictureController {
     @Resource
     private UserService userService;
 
-    @AuthCheck(mustRole = UserRoleEnum.ADMIN)
     @ApiOperation("图片上传")
     @PostMapping("/upload")
     public ResponseResult<PictureVO> uploadPicture(@RequestPart("file") MultipartFile multipartFile, Long pictureId) {
@@ -50,6 +53,7 @@ public class PictureController {
      * 删除图片
      */
     @ApiOperation("删除图片")
+    @AuthCheck(mustRole = UserRoleEnum.ADMIN)
     @DeleteMapping("/delete/{id}")
     public ResponseResult<Boolean> deletePicture(@PathVariable @NotNull Long id) {
         return pictureService.deletePicture(id);
@@ -116,6 +120,17 @@ public class PictureController {
     @GetMapping("/tag_category")
     public ResponseResult<PictureTagCategoryVO> listPictureTagCategory() {
         return pictureService.listPictureTagCategory();
+    }
+
+
+    @PostMapping("/review")
+    @ApiOperation("图片审核")
+    @AuthCheck(mustRole = UserRoleEnum.ADMIN)
+    public ResponseResult<Boolean> doPictureReview(@RequestBody PictureReviewDTO pictureReviewDTO) {
+        ThrowUtil.throwIf(pictureReviewDTO == null, ErrorCodeEnum.PARAMS_ERROR);
+        UserLoginVO loginUser = userService.getCurrentUser().getData();
+        pictureService.doPictureReview(pictureReviewDTO, loginUser);
+        return ResultUtil.success(true);
     }
 
 

@@ -111,6 +111,32 @@ public class Picture implements Serializable {
     @TableField(value = "is_delete")
     private Integer isDelete;
 
+
+    /**
+     * 状态：0-待审核; 1-通过; 2-拒绝
+     */
+    @TableField(value = "review_status")
+    private Integer reviewStatus;
+
+    /**
+     * 审核信息
+     */
+    @TableField(value = "review_message")
+    private String reviewMessage;
+
+    /**
+     * 审核人 id
+     */
+    @TableField(value = "reviewer_id")
+    private Long reviewerId;
+
+    /**
+     * 审核时间
+     */
+    @TableField(value = "review_time")
+    private String reviewTime;
+
+
     @TableField(exist = false)
     private String username;
 
