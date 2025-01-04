@@ -93,7 +93,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             String encryptedUser = Base64.getEncoder().encodeToString(userJson.getBytes());
             Cookie cookie = new Cookie(CommonConstant.LOGIN_USER, encryptedUser);
             cookie.setPath("/");
-            cookie.setMaxAge(60 * 60); // 1天
+            cookie.setMaxAge(24 * 60 * 60); // 1天
             cookie.setHttpOnly(true);
             response.addCookie(cookie);
         } catch (Exception e) {
