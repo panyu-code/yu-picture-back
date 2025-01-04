@@ -28,7 +28,7 @@ import javax.validation.constraints.NotNull;
 
 /**
  * @author: YuPan
- * @Desc:
+ * @Desc: PictureController
  * @create: 2024-12-22 20:54
  **/
 @RestController
@@ -38,29 +38,56 @@ public class PictureController {
 
     @Resource
     private PictureService pictureService;
-
     @Resource
     private UserService userService;
 
-    @ApiOperation("图片上传")
-    @PostMapping("/upload")
-    public ResponseResult<PictureVO> uploadPicture(@RequestPart("file") MultipartFile multipartFile, Long pictureId) {
+    /**
+     * 图片上传（文件）
+     *
+     * @param multipartFile
+     * @param pictureId
+     * @return
+     */
+    @ApiOperation("图片上传（文件）")
+    @PostMapping("/upload-file")
+    public ResponseResult<PictureVO> uploadPicture(@RequestPart("file") MultipartFile multipartFile,
+                                                   Long pictureId) {
         UserLoginVO loginUser = userService.getCurrentUser().getData();
         return pictureService.uploadPicture(multipartFile, pictureId, loginUser);
     }
 
     /**
+     * 图片上传（url)
+     *
+     * @param url
+     * @param pictureId
+     * @return
+     */
+    @ApiOperation("图片上传（url)")
+    @PostMapping("/upload-url")
+    public ResponseResult<PictureVO> uploadPictureByUrl( String url,  Long pictureId) {
+        UserLoginVO loginUser = userService.getCurrentUser().getData();
+        return pictureService.uploadPicture(url, pictureId, loginUser);
+    }
+
+    /**
      * 删除图片
+     *
+     * @param id
+     * @return
      */
     @ApiOperation("删除图片")
-    @AuthCheck(mustRole = UserRoleEnum.ADMIN)
     @DeleteMapping("/delete/{id}")
+    @AuthCheck(mustRole = UserRoleEnum.ADMIN)
     public ResponseResult<Boolean> deletePicture(@PathVariable @NotNull Long id) {
         return pictureService.deletePicture(id);
     }
 
     /**
      * 更新图片（仅管理员可用）
+     *
+     * @param pictureUpdateDTO
+     * @return
      */
     @ApiOperation("更新图片（仅管理员可用）")
     @PostMapping("/update")
@@ -71,6 +98,9 @@ public class PictureController {
 
     /**
      * 根据 id 获取图片详细信息（仅管理员可用）
+     *
+     * @param id
+     * @return
      */
     @ApiOperation("根据 id 获取图片详细信息（仅管理员可用）")
     @GetMapping("/get/{id}")
@@ -81,6 +111,9 @@ public class PictureController {
 
     /**
      * 根据 id 获取图片（封装类）
+     *
+     * @param id
+     * @return
      */
     @ApiOperation("根据 id 获取图片（封装类）")
     @GetMapping("/get/vo/{id}")
@@ -90,6 +123,9 @@ public class PictureController {
 
     /**
      * 分页获取图片列表（仅管理员可用）
+     *
+     * @param pictureQueryDTO
+     * @return
      */
     @ApiOperation("分页获取图片列表（仅管理员可用）")
     @PostMapping("/list/page")
@@ -100,6 +136,9 @@ public class PictureController {
 
     /**
      * 分页获取图片列表（封装类）
+     *
+     * @param pictureQueryDTO
+     * @return
      */
     @ApiOperation("分页获取图片列表（封装类）")
     @PostMapping("/list/page/vo")
@@ -109,6 +148,9 @@ public class PictureController {
 
     /**
      * 编辑图片（给用户使用）
+     *
+     * @param pictureEditDTO
+     * @return
      */
     @ApiOperation("编辑图片（给用户使用）")
     @PostMapping("/edit")
@@ -116,15 +158,25 @@ public class PictureController {
         return pictureService.editPicture(pictureEditDTO);
     }
 
+    /**
+     * 获取图片标签和分类列表
+     *
+     * @return
+     */
     @ApiOperation("获取图片标签和分类列表")
     @GetMapping("/tag_category")
     public ResponseResult<PictureTagCategoryVO> listPictureTagCategory() {
         return pictureService.listPictureTagCategory();
     }
 
-
-    @PostMapping("/review")
+    /**
+     * 图片审核
+     *
+     * @param pictureReviewDTO
+     * @return
+     */
     @ApiOperation("图片审核")
+    @PostMapping("/review")
     @AuthCheck(mustRole = UserRoleEnum.ADMIN)
     public ResponseResult<Boolean> doPictureReview(@RequestBody PictureReviewDTO pictureReviewDTO) {
         ThrowUtil.throwIf(pictureReviewDTO == null, ErrorCodeEnum.PARAMS_ERROR);

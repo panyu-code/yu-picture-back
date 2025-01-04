@@ -17,10 +17,12 @@ import com.panyu.yupictureback.domain.vo.user.UserLoginVO;
 import com.panyu.yupictureback.enums.ErrorCodeEnum;
 import com.panyu.yupictureback.enums.PictureReviewStatusEnum;
 import com.panyu.yupictureback.exception.BusinessException;
-import com.panyu.yupictureback.manager.FileManager;
+import com.panyu.yupictureback.manager.upload.FilePictureUpload;
+import com.panyu.yupictureback.manager.upload.UrlPictureUpload;
 import com.panyu.yupictureback.mapper.PictureMapper;
 import com.panyu.yupictureback.service.PictureService;
 import com.panyu.yupictureback.service.UserService;
+import com.panyu.yupictureback.template.PictureUploadTemplate;
 import com.panyu.yupictureback.utils.ResultUtil;
 import com.panyu.yupictureback.utils.ThrowUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +32,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -42,15 +47,16 @@ import java.util.stream.Collectors;
 @Slf4j
 public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> implements PictureService {
     @Resource
-    private FileManager fileManager;
-
-    @Resource
     private UserService userService;
+    @Resource
+    private FilePictureUpload filePictureUpload;
+    @Resource
+    private UrlPictureUpload urlPictureUpload;
 
     @Override
-    public ResponseResult<PictureVO> uploadPicture(MultipartFile multipartFile, Long pictureId, UserLoginVO loginUser) {
+    public ResponseResult<PictureVO> uploadPicture(Object inputSource, Long pictureId, UserLoginVO loginUser) {
         ThrowUtil.throwIf(loginUser == null, ErrorCodeEnum.NO_AUTH_ERROR);
-        ThrowUtil.throwIf(multipartFile == null, ErrorCodeEnum.PARAMS_ERROR, "文件不能为空");
+        ThrowUtil.throwIf(inputSource == null, ErrorCodeEnum.PARAMS_ERROR, "输入源不能为空");
         // 如果是更新图片，需要校验图片是否存在
         if (pictureId != null) {
             Picture oldPicture = this.getById(pictureId);
@@ -62,8 +68,10 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         }
         // 定义上传路径前缀
         String uploadPathPrefix = String.format("public/%s", loginUser.getId());
-        // 上传图片
-        PictureUploadDTO uploadPictureResult = fileManager.uploadPicture(multipartFile, uploadPathPrefix);
+        // 上传图片（根据类型选择不同的上传方式）
+        PictureUploadTemplate pictureUploadTemplate = inputSource instanceof MultipartFile
+                ? filePictureUpload : urlPictureUpload;
+        PictureUploadDTO uploadPictureResult = pictureUploadTemplate.uploadPicture(inputSource, uploadPathPrefix);
         // 封装图片实体
         Picture picture = new Picture();
         picture.setUrl(uploadPictureResult.getUrl());
@@ -226,9 +234,6 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         return pictureVO;
     }
 
-    /**
-     * 分页获取图片封装
-     */
     @Override
     public Page<PictureVO> getPictureVOPage(Page<Picture> picturePage) {
         List<Picture> pictureList = picturePage.getRecords();
@@ -337,12 +342,6 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         }
     }
 
-    /**
-     * 图片审核
-     *
-     * @param pictureReviewDTO
-     * @param loginUser
-     */
     @Override
     public void doPictureReview(PictureReviewDTO pictureReviewDTO, UserLoginVO loginUser) {
         Long id = pictureReviewDTO.getId();

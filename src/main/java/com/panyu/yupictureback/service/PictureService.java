@@ -12,7 +12,6 @@ import com.panyu.yupictureback.domain.entity.Picture;
 import com.panyu.yupictureback.domain.vo.picture.PictureTagCategoryVO;
 import com.panyu.yupictureback.domain.vo.picture.PictureVO;
 import com.panyu.yupictureback.domain.vo.user.UserLoginVO;
-import org.springframework.web.multipart.MultipartFile;
 
 /**
  * @author yupan
@@ -23,12 +22,12 @@ public interface PictureService extends IService<Picture> {
     /**
      * 上传图片
      *
-     * @param multipartFile
+     * @param inputSource
      * @param pictureId
      * @param loginUser
      * @return
      */
-    ResponseResult<PictureVO> uploadPicture(MultipartFile multipartFile, Long pictureId, UserLoginVO loginUser);
+    ResponseResult<PictureVO> uploadPicture(Object inputSource, Long pictureId, UserLoginVO loginUser);
 
 
     /**
@@ -133,6 +132,11 @@ public interface PictureService extends IService<Picture> {
      */
     void doPictureReview(PictureReviewDTO pictureReviewRequest, UserLoginVO loginUser);
 
-
+    /**
+     * 填充审核参数
+     *
+     * @param picture
+     * @param loginUser
+     */
     void fillReviewParams(Picture picture, UserLoginVO loginUser);
 }

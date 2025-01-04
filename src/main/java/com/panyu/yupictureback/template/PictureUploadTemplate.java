@@ -1,10 +1,4 @@
-package com.panyu.yupictureback.manager;
-
-/**
- * @author: YuPan
- * @Desc:
- * @create: 2024-12-22 19:39
- **/
+package com.panyu.yupictureback.template;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
@@ -14,40 +8,41 @@ import com.panyu.yupictureback.config.CosClientConfig;
 import com.panyu.yupictureback.domain.dto.picture.PictureUploadDTO;
 import com.panyu.yupictureback.enums.ErrorCodeEnum;
 import com.panyu.yupictureback.exception.BusinessException;
-import com.panyu.yupictureback.utils.ThrowUtil;
+import com.panyu.yupictureback.manager.CosManager;
 import com.qcloud.cos.model.PutObjectResult;
 import com.qcloud.cos.model.ciModel.persistence.ImageInfo;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.io.File;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 
-@Service
+/**
+ * @author: YuPan
+ * @Desc:
+ * @create: 2025-01-04 22:59
+ **/
 @Slf4j
-public class FileManager {
+public abstract class PictureUploadTemplate {
     @Resource
     private CosClientConfig cosClientConfig;
     @Resource
     private CosManager cosManager;
 
+
     /**
      * 上传图片
      *
-     * @param multipartFile    文件
+     * @param inputSource      文件
      * @param uploadPathPrefix 上传路径前缀
      * @return
      */
-    public PictureUploadDTO uploadPicture(MultipartFile multipartFile, String uploadPathPrefix) {
+    public PictureUploadDTO uploadPicture(Object inputSource, String uploadPathPrefix) {
         // 校验图片
-        validPicture(multipartFile);
+        validInputSource(inputSource);
         // 图片上传地址
         String uuid = RandomUtil.randomString(16);
-        String originFilename = multipartFile.getOriginalFilename();
+        String originFilename = getOriginalInputSourceName(inputSource);
         // 定义上传文件名
         String uploadFilename = String.format("%s_%s.%s", DateUtil.formatDate(new Date()), uuid,
                 FileUtil.getSuffix(originFilename));
@@ -57,23 +52,12 @@ public class FileManager {
         try {
             // 创建临时文件
             file = File.createTempFile(uploadPath, null);
-            multipartFile.transferTo(file);
+            processFile(inputSource, file);
             // 上传图片
             PutObjectResult putObjectResult = cosManager.putPictureObject(uploadPath, file);
             ImageInfo imageInfo = putObjectResult.getCiUploadResult().getOriginalInfo().getImageInfo();
             // 封装返回结果
-            PictureUploadDTO uploadPictureResult = new PictureUploadDTO();
-            int picWidth = imageInfo.getWidth();
-            int picHeight = imageInfo.getHeight();
-            double picScale = NumberUtil.round(picWidth * 1.0 / picHeight, 2).doubleValue();
-            uploadPictureResult.setName(FileUtil.mainName(originFilename));
-            uploadPictureResult.setWidth(picWidth);
-            uploadPictureResult.setHeight(picHeight);
-            uploadPictureResult.setScale(picScale);
-            uploadPictureResult.setFormat(imageInfo.getFormat());
-            uploadPictureResult.setSize(FileUtil.size(file));
-            uploadPictureResult.setUrl(cosClientConfig.getHost() + "/" + uploadPath);
-            return uploadPictureResult;
+            return getPictureUploadDTO(imageInfo, originFilename, file, uploadPath);
         } catch (Exception e) {
             log.error("图片上传到对象存储失败", e);
             throw new BusinessException(ErrorCodeEnum.SYSTEM_ERROR, "上传失败");
@@ -82,23 +66,30 @@ public class FileManager {
         }
     }
 
+
     /**
-     * 校验文件
+     * 处理输入源并处理临时文件
      *
-     * @param multipartFile multipart 文件
+     * @param inputSource
+     * @param file
      */
-    public void validPicture(MultipartFile multipartFile) {
-        ThrowUtil.throwIf(multipartFile == null, ErrorCodeEnum.PARAMS_ERROR, "文件不能为空");
-        // 1. 校验文件大小
-        long fileSize = multipartFile.getSize();
-        final long ONE_M = 1024 * 1024L;
-        ThrowUtil.throwIf(fileSize > 2 * ONE_M, ErrorCodeEnum.PARAMS_ERROR, "文件大小不能超过 2M");
-        // 2. 校验文件后缀
-        String fileSuffix = FileUtil.getSuffix(multipartFile.getOriginalFilename());
-        // 允许上传的文件后缀
-        final List<String> ALLOW_FORMAT_LIST = Arrays.asList("jpeg", "jpg", "png", "webp");
-        ThrowUtil.throwIf(!ALLOW_FORMAT_LIST.contains(fileSuffix), ErrorCodeEnum.PARAMS_ERROR, "文件类型错误");
-    }
+    protected abstract void processFile(Object inputSource, File file);
+
+    /**
+     * 获取输入源的原始文件名
+     *
+     * @param inputSource
+     * @return
+     */
+    protected abstract String getOriginalInputSourceName(Object inputSource);
+
+    /**
+     * 校验输入源
+     *
+     * @param inputSource
+     */
+    protected abstract void validInputSource(Object inputSource);
+
 
     /**
      * 删除临时文件
@@ -114,5 +105,28 @@ public class FileManager {
         }
     }
 
+    /**
+     * 封装返回结果
+     *
+     * @param imageInfo
+     * @param originFilename
+     * @param file
+     * @param uploadPath
+     * @return
+     */
+    private PictureUploadDTO getPictureUploadDTO(ImageInfo imageInfo, String originFilename, File file, String uploadPath) {
+        PictureUploadDTO uploadPictureResult = new PictureUploadDTO();
+        int picWidth = imageInfo.getWidth();
+        int picHeight = imageInfo.getHeight();
+        double picScale = NumberUtil.round(picWidth * 1.0 / picHeight, 2).doubleValue();
+        uploadPictureResult.setName(FileUtil.mainName(originFilename));
+        uploadPictureResult.setWidth(picWidth);
+        uploadPictureResult.setHeight(picHeight);
+        uploadPictureResult.setScale(picScale);
+        uploadPictureResult.setFormat(imageInfo.getFormat());
+        uploadPictureResult.setSize(FileUtil.size(file));
+        uploadPictureResult.setUrl(cosClientConfig.getHost() + "/" + uploadPath);
+        return uploadPictureResult;
+    }
 
 }

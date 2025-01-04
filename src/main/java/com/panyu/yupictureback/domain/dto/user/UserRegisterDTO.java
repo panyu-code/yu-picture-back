@@ -2,9 +2,7 @@ package com.panyu.yupictureback.domain.dto.user;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import javax.validation.constraints.Pattern;
@@ -19,8 +17,6 @@ import java.io.Serializable;
 @ApiModel("用户注册DTO")
 @Data
 @Accessors(chain = true)
-@AllArgsConstructor
-@NoArgsConstructor
 public class UserRegisterDTO implements Serializable {
 
     private static final long serialVersionUID = -417362913792638993L;

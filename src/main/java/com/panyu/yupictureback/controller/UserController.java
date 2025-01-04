@@ -20,7 +20,7 @@ import java.util.List;
 
 /**
  * @author: YuPan
- * @Desc: 用户请求类
+ * @Desc: UserController
  * @create: 2024-12-14 18:54
  **/
 @RestController
@@ -31,6 +31,12 @@ public class UserController {
     @Resource
     private UserService userService;
 
+    /**
+     * 用户注册
+     *
+     * @param userRegisterDTO
+     * @return
+     */
     @ApiOperation("用户注册")
     @PostMapping("/register")
     public ResponseResult<Long> registerUser(@RequestBody @Validated UserRegisterDTO userRegisterDTO) {
@@ -38,6 +44,13 @@ public class UserController {
         return userService.registerUser(userRegisterDTO);
     }
 
+    /**
+     * 用户登录
+     *
+     * @param userLoginDTO
+     * @param request
+     * @return
+     */
     @ApiOperation("用户登录")
     @PostMapping("/login")
     public ResponseResult<UserLoginVO> doLogin(@RequestBody @Validated UserLoginDTO userLoginDTO, HttpServletRequest request) {
@@ -45,28 +58,49 @@ public class UserController {
         return userService.doLogin(userLoginDTO, request);
     }
 
-
+    /**
+     * 退出登录
+     *
+     * @param request
+     * @return
+     */
     @ApiOperation("退出登录")
     @PostMapping("/logout")
     public ResponseResult<Boolean> doLogout(HttpServletRequest request) {
         return userService.doLogout(request);
     }
 
-
+    /**
+     * 获取当前登录用户
+     *
+     * @return
+     */
     @ApiOperation("获取当前登录用户")
     @GetMapping("/current")
     public ResponseResult<UserLoginVO> getCurrentUser() {
         return userService.getCurrentUser();
     }
 
-    @AuthCheck(mustRole = UserRoleEnum.ADMIN)
+    /**
+     * 新增用户-管理员权限
+     *
+     * @param userAddDTO
+     * @return
+     */
     @ApiOperation("新增用户-管理员权限")
     @PostMapping("/add")
+    @AuthCheck(mustRole = UserRoleEnum.ADMIN)
     public ResponseResult<Boolean> addUser(@RequestBody @Validated UserAddDTO userAddDTO) {
         log.info("新增用户入参：{}", userAddDTO);
         return userService.addUser(userAddDTO);
     }
 
+    /**
+     * 修改用户
+     *
+     * @param userUpdateDTO
+     * @return
+     */
     @ApiOperation("修改用户")
     @PostMapping("/update")
     public ResponseResult<Boolean> updateUser(@RequestBody @Validated UserUpdateDTO userUpdateDTO) {
@@ -74,25 +108,43 @@ public class UserController {
         return userService.updateUser(userUpdateDTO);
     }
 
-    @AuthCheck(mustRole = UserRoleEnum.ADMIN)
+    /**
+     * 删除用户-批量删除
+     *
+     * @param ids
+     * @return
+     */
     @ApiOperation("删除用户-批量删除")
     @DeleteMapping("/delete")
+    @AuthCheck(mustRole = UserRoleEnum.ADMIN)
     public ResponseResult<Boolean> deleteUser(@RequestBody List<Long> ids) {
         log.info("删除用户入参：{}", ids);
         return userService.deleteUser(ids);
     }
 
-    @AuthCheck(mustRole = UserRoleEnum.ADMIN)
+    /**
+     * 查询用户列表
+     *
+     * @param userQueryDTO
+     * @return
+     */
     @ApiOperation("查询用户列表")
     @PostMapping("/list")
+    @AuthCheck(mustRole = UserRoleEnum.ADMIN)
     public ResponseResult<Page<UserListVO>> listUser(@RequestBody @Validated UserQueryDTO userQueryDTO) {
         log.info("查询用户列表入参：{}", userQueryDTO);
         return userService.listUser(userQueryDTO);
     }
 
-    @AuthCheck(mustRole = UserRoleEnum.ADMIN)
+    /**
+     * 根据id获取用户信息
+     *
+     * @param id
+     * @return
+     */
     @ApiOperation("根据id获取用户信息")
     @GetMapping("/id/{id}")
+    @AuthCheck(mustRole = UserRoleEnum.ADMIN)
     public ResponseResult<User> getUserById(@PathVariable("id") Long id) {
         log.info("根据id获取用户信息入参：{}", id);
         return userService.getUserById(id);

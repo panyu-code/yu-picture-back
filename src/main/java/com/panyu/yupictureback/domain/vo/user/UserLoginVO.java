@@ -2,9 +2,7 @@ package com.panyu.yupictureback.domain.vo.user;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
@@ -18,8 +16,6 @@ import java.time.LocalDateTime;
 @ApiModel("用户登录VO")
 @Data
 @Accessors(chain = true)
-@AllArgsConstructor
-@NoArgsConstructor
 public class UserLoginVO implements Serializable {
     private static final long serialVersionUID = -8395462806683916314L;
 
@@ -58,13 +54,20 @@ public class UserLoginVO implements Serializable {
      */
     @ApiModelProperty("年龄")
     private Integer age;
-
+    /**
+     * 头像
+     */
     @ApiModelProperty("头像")
     private String avatar;
-
+    /**
+     * 手机号
+     */
     @ApiModelProperty("手机号")
     private String phone;
 
+    /**
+     * 邮箱
+     */
     @ApiModelProperty("邮箱")
     private String email;
     /**
