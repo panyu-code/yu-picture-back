@@ -7,6 +7,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.panyu.yupictureback.common.ResponseResult;
 import com.panyu.yupictureback.constant.CommonConstant;
 import com.panyu.yupictureback.domain.dto.user.*;
@@ -26,7 +27,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -75,18 +79,27 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return
      */
     @Override
-    public ResponseResult<UserLoginVO> doLogin(UserLoginDTO userLoginDTO, HttpServletRequest request) {
+    public ResponseResult<UserLoginVO> doLogin(UserLoginDTO userLoginDTO, HttpServletRequest request, HttpServletResponse response) {
         String username = userLoginDTO.getUsername();
         String password = userLoginDTO.getPassword();
         User user = userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
-        // 判断有没有这个用户
-        ThrowUtil.throwIf(user == null, ErrorCodeEnum.PARAMS_ERROR, "用户名或密码错误！");
-        // 判断密码是否正确
-        ThrowUtil.throwIf(!EncryptUtil.encryptPassword(password).equals(user.getPassword()), ErrorCodeEnum.PARAMS_ERROR, "用户名或密码错误！");
+        // 判断有没有这个用户，密码是否正确
+        ThrowUtil.throwIf(user == null || !EncryptUtil.encryptPassword(password).equals(user.getPassword()), ErrorCodeEnum.PARAMS_ERROR, "用户名或密码错误！");
         // 脱敏
         UserLoginVO currentUser = BeanUtil.copyProperties(user, UserLoginVO.class);
-        // 存入session
-        request.getSession().setAttribute(CommonConstant.LOGIN_USER, currentUser);
+        // 3. 将用户信息加密后存储到 Cookie
+        try {
+            String userJson = new ObjectMapper().writeValueAsString(currentUser);
+            String encryptedUser = Base64.getEncoder().encodeToString(userJson.getBytes());
+            Cookie cookie = new Cookie(CommonConstant.LOGIN_USER, encryptedUser);
+            cookie.setPath("/");
+            cookie.setMaxAge(60 * 60); // 1天
+            cookie.setHttpOnly(true);
+            response.addCookie(cookie);
+        } catch (Exception e) {
+            log.error("用户信息序列化失败", e);
+            throw new BusinessException(ErrorCodeEnum.SYSTEM_ERROR, "用户信息序列化失败");
+        }
         return ResultUtil.success(currentUser);
     }
 
@@ -184,17 +197,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public ResponseResult<UserLoginVO> getCurrentUser() {
-        UserLoginVO currentUser = UserContextUtil.getCurrentUser();
-        ThrowUtil.throwIf(currentUser == null, ErrorCodeEnum.NOT_LOGIN_ERROR);
-        return ResultUtil.success(currentUser);
+        return ResultUtil.success(UserContextUtil.getCurrentUser());
     }
 
     @Override
-    public ResponseResult<Boolean> doLogout(HttpServletRequest request) {
+    public ResponseResult<Boolean> doLogout(HttpServletRequest request, HttpServletResponse response) {
         UserLoginVO currentUser = UserContextUtil.getCurrentUser();
         ThrowUtil.throwIf(currentUser == null, ErrorCodeEnum.NOT_LOGIN_ERROR);
-        // UserContextUtil.removeCurrentUser();
-        request.getSession().removeAttribute(CommonConstant.LOGIN_USER);
+        Cookie cookie = new Cookie(CommonConstant.LOGIN_USER, "");
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        cookie.setHttpOnly(true);
+        response.addCookie(cookie);
         return ResultUtil.success(true);
     }
 
@@ -202,9 +216,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public boolean isAdmin(UserLoginVO user) {
         return ObjectUtil.isNotNull(user) && ObjectUtil.isNotNull(user.getRole()) && Objects.equals(user.getRole(), UserRoleEnum.ADMIN.getValue());
     }
-
-
-
 
 }
 

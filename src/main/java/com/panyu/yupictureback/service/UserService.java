@@ -9,6 +9,7 @@ import com.panyu.yupictureback.domain.vo.user.UserListVO;
 import com.panyu.yupictureback.domain.vo.user.UserLoginVO;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -32,7 +33,7 @@ public interface UserService extends IService<User> {
      * @param request
      * @return
      */
-    ResponseResult<UserLoginVO> doLogin(UserLoginDTO userLoginDTO, HttpServletRequest request);
+    ResponseResult<UserLoginVO> doLogin(UserLoginDTO userLoginDTO, HttpServletRequest request, HttpServletResponse response);
 
     /**
      * 新增用户
@@ -87,7 +88,7 @@ public interface UserService extends IService<User> {
      * @param request
      * @return
      */
-    ResponseResult<Boolean> doLogout(HttpServletRequest request);
+    ResponseResult<Boolean> doLogout(HttpServletRequest request,HttpServletResponse response);
 
     /**
      * 判断是否为管理员

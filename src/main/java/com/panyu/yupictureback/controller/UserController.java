@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -53,9 +54,10 @@ public class UserController {
      */
     @ApiOperation("用户登录")
     @PostMapping("/login")
-    public ResponseResult<UserLoginVO> doLogin(@RequestBody @Validated UserLoginDTO userLoginDTO, HttpServletRequest request) {
+    public ResponseResult<UserLoginVO> doLogin(@RequestBody @Validated UserLoginDTO userLoginDTO,
+                                               HttpServletRequest request, HttpServletResponse response) {
         log.info("用户登录入参：{}", userLoginDTO);
-        return userService.doLogin(userLoginDTO, request);
+        return userService.doLogin(userLoginDTO, request,response);
     }
 
     /**
@@ -66,8 +68,8 @@ public class UserController {
      */
     @ApiOperation("退出登录")
     @PostMapping("/logout")
-    public ResponseResult<Boolean> doLogout(HttpServletRequest request) {
-        return userService.doLogout(request);
+    public ResponseResult<Boolean> doLogout(HttpServletRequest request,HttpServletResponse response) {
+        return userService.doLogout(request,response);
     }
 
     /**

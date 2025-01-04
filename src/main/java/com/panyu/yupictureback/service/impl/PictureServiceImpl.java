@@ -25,6 +25,7 @@ import com.panyu.yupictureback.service.UserService;
 import com.panyu.yupictureback.template.PictureUploadTemplate;
 import com.panyu.yupictureback.utils.ResultUtil;
 import com.panyu.yupictureback.utils.ThrowUtil;
+import com.panyu.yupictureback.utils.UserContextUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -97,7 +98,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         if (id == null) {
             throw new BusinessException(ErrorCodeEnum.PARAMS_ERROR);
         }
-        UserLoginVO userLoginVO = userService.getCurrentUser().getData();
+        UserLoginVO userLoginVO = UserContextUtil.getCurrentUser();
         // 判断是否存在
         Picture oldPicture = this.getById(id);
         ThrowUtil.throwIf(oldPicture == null, ErrorCodeEnum.NOT_FOUND_ERROR);
@@ -127,7 +128,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         long id = pictureUpdateDTO.getId();
         Picture oldPicture = this.getById(id);
         ThrowUtil.throwIf(oldPicture == null, ErrorCodeEnum.NOT_FOUND_ERROR);
-        this.fillReviewParams(picture, userService.getCurrentUser().getData());
+        this.fillReviewParams(picture, UserContextUtil.getCurrentUser());
         // 操作数据库
         boolean result = this.updateById(picture);
         ThrowUtil.throwIf(!result, ErrorCodeEnum.OPERATION_ERROR);
@@ -177,7 +178,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         picture.setTags(JSONUtil.toJsonStr(pictureEditDTO.getTags()));
         // 数据校验
         this.validPicture(picture);
-        UserLoginVO userLoginVO = userService.getCurrentUser().getData();
+        UserLoginVO userLoginVO = UserContextUtil.getCurrentUser();
         // 判断是否存在
         long id = pictureEditDTO.getId();
         Picture oldPicture = this.getById(id);

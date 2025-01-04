@@ -14,9 +14,9 @@ import com.panyu.yupictureback.domain.vo.user.UserLoginVO;
 import com.panyu.yupictureback.enums.ErrorCodeEnum;
 import com.panyu.yupictureback.enums.UserRoleEnum;
 import com.panyu.yupictureback.service.PictureService;
-import com.panyu.yupictureback.service.UserService;
 import com.panyu.yupictureback.utils.ResultUtil;
 import com.panyu.yupictureback.utils.ThrowUtil;
+import com.panyu.yupictureback.utils.UserContextUtil;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -38,8 +38,6 @@ public class PictureController {
 
     @Resource
     private PictureService pictureService;
-    @Resource
-    private UserService userService;
 
     /**
      * 图片上传（文件）
@@ -52,7 +50,7 @@ public class PictureController {
     @PostMapping("/upload-file")
     public ResponseResult<PictureVO> uploadPicture(@RequestPart("file") MultipartFile multipartFile,
                                                    Long pictureId) {
-        UserLoginVO loginUser = userService.getCurrentUser().getData();
+        UserLoginVO loginUser = UserContextUtil.getCurrentUser();
         return pictureService.uploadPicture(multipartFile, pictureId, loginUser);
     }
 
@@ -65,8 +63,8 @@ public class PictureController {
      */
     @ApiOperation("图片上传（url)")
     @PostMapping("/upload-url")
-    public ResponseResult<PictureVO> uploadPictureByUrl( String url,  Long pictureId) {
-        UserLoginVO loginUser = userService.getCurrentUser().getData();
+    public ResponseResult<PictureVO> uploadPictureByUrl(String url, Long pictureId) {
+        UserLoginVO loginUser = UserContextUtil.getCurrentUser();
         return pictureService.uploadPicture(url, pictureId, loginUser);
     }
 
@@ -180,10 +178,9 @@ public class PictureController {
     @AuthCheck(mustRole = UserRoleEnum.ADMIN)
     public ResponseResult<Boolean> doPictureReview(@RequestBody PictureReviewDTO pictureReviewDTO) {
         ThrowUtil.throwIf(pictureReviewDTO == null, ErrorCodeEnum.PARAMS_ERROR);
-        UserLoginVO loginUser = userService.getCurrentUser().getData();
+        UserLoginVO loginUser = UserContextUtil.getCurrentUser();
         pictureService.doPictureReview(pictureReviewDTO, loginUser);
         return ResultUtil.success(true);
     }
-
 
 }
