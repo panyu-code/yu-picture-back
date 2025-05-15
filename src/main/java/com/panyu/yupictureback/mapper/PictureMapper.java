@@ -1,7 +1,7 @@
 package com.panyu.yupictureback.mapper;
 
-import com.panyu.yupictureback.domain.entity.Picture;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.panyu.yupictureback.domain.entity.Picture;
 
 /**
 * @author yupan

@@ -4,10 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.panyu.yupictureback.common.ResponseResult;
-import com.panyu.yupictureback.domain.dto.picture.PictureEditDTO;
-import com.panyu.yupictureback.domain.dto.picture.PictureQueryDTO;
-import com.panyu.yupictureback.domain.dto.picture.PictureReviewDTO;
-import com.panyu.yupictureback.domain.dto.picture.PictureUpdateDTO;
+import com.panyu.yupictureback.domain.dto.picture.*;
 import com.panyu.yupictureback.domain.entity.Picture;
 import com.panyu.yupictureback.domain.vo.picture.PictureTagCategoryVO;
 import com.panyu.yupictureback.domain.vo.picture.PictureVO;
@@ -139,4 +136,13 @@ public interface PictureService extends IService<Picture> {
      * @param loginUser
      */
     void fillReviewParams(Picture picture, UserLoginVO loginUser);
+
+    /**
+     * 批量上传图片
+     * @param pictureBatchUploadDTO
+     * @param loginUser
+     * @return
+     */
+    Integer batchUploadPicture(PictureBatchUploadDTO pictureBatchUploadDTO, UserLoginVO loginUser);
+
 }

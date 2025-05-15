@@ -27,16 +27,18 @@ import com.panyu.yupictureback.utils.ResultUtil;
 import com.panyu.yupictureback.utils.ThrowUtil;
 import com.panyu.yupictureback.utils.UserContextUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -381,7 +383,36 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         }
     }
 
-
+    @Override
+    public Integer batchUploadPicture(PictureBatchUploadDTO pictureBatchUploadDTO, UserLoginVO loginUser) {
+        if (!userService.isAdmin(loginUser)) {
+            throw new BusinessException(ErrorCodeEnum.NO_AUTH_ERROR);
+        }
+        String searchText = pictureBatchUploadDTO.getSearchText();
+        Integer batchSize = pictureBatchUploadDTO.getBatchSize();
+        // 判断抓取的数量，最多30条
+        if (batchSize > 30) {
+            throw new BusinessException(ErrorCodeEnum.PARAMS_ERROR, "最多上传30张图片");
+        }
+        String fetchRul = String.format("https://cn.bing.com/images/async?q=%s&mmasync=1", searchText);
+        Document document;
+        try {
+            document = Jsoup.connect(fetchRul).get();
+        } catch (IOException e) {
+            log.error("批量抓取获取页面失败！", e);
+            throw new BusinessException(ErrorCodeEnum.OPERATION_ERROR, "批量抓取获取页面失败！");
+        }
+        // 解析内容
+        Element firstEle = document.getElementsByClass("dgControl").first();
+        if (Objects.isNull(firstEle)) {
+            throw new BusinessException(ErrorCodeEnum.OPERATION_ERROR, "获取首个元素失败！");
+        }
+        Elements elements = firstEle.select("img .ming");
+        if (CollUtil.isEmpty(elements)) {
+            throw new BusinessException(ErrorCodeEnum.OPERATION_ERROR, "获取图片为空！");
+        }
+        return 0;
+    }
 }
 
 
