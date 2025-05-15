@@ -74,7 +74,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         // 上传图片（根据类型选择不同的上传方式）
         PictureUploadTemplate pictureUploadTemplate = inputSource instanceof MultipartFile
                 ? filePictureUpload : urlPictureUpload;
-        PictureUploadDTO uploadPictureResult = pictureUploadTemplate.uploadPicture(inputSource, uploadPathPrefix);
+        boolean fileFlag = inputSource instanceof MultipartFile;
+        PictureUploadDTO uploadPictureResult = pictureUploadTemplate.uploadPicture(inputSource, uploadPathPrefix,fileFlag);
         // 封装图片实体
         Picture picture = new Picture();
         picture.setUrl(uploadPictureResult.getUrl());

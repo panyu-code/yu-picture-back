@@ -16,6 +16,8 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
 import java.io.File;
 import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author: YuPan
@@ -29,6 +31,22 @@ public abstract class PictureUploadTemplate {
     @Resource
     private CosManager cosManager;
 
+    public static void main(String[] args) {
+        String url = "https://img1.baidu.com/it/u=2172818577,3783888802&fm=253&fmt=auto&app=138&f=JPEG?w=800&h=1422";
+        // 截取?前面的部分
+        String beforeQuestionMark = url.substring(0, url.indexOf('?'));
+
+        // 正则表达式匹配f参数的值
+        Pattern pattern = Pattern.compile("(?<=\\bf=)[^&]*");
+        Matcher matcher = pattern.matcher(beforeQuestionMark);
+
+        if (matcher.find()) {
+            System.out.println("f 参数的值是: " + matcher.group());
+        } else {
+            System.out.println("没有找到 f 参数的值。");
+        }
+    }
+
 
     /**
      * 上传图片
@@ -37,15 +55,28 @@ public abstract class PictureUploadTemplate {
      * @param uploadPathPrefix 上传路径前缀
      * @return
      */
-    public PictureUploadDTO uploadPicture(Object inputSource, String uploadPathPrefix) {
+    public PictureUploadDTO uploadPicture(Object inputSource, String uploadPathPrefix, boolean fileFlag) {
         // 校验图片
         validInputSource(inputSource);
         // 图片上传地址
         String uuid = RandomUtil.randomString(16);
         String originFilename = getOriginalInputSourceName(inputSource);
         // 定义上传文件名
-        String uploadFilename = String.format("%s_%s.%s", DateUtil.formatDate(new Date()), uuid,
-                FileUtil.getSuffix(originFilename));
+        String uploadFilename = "";
+        if (fileFlag) {
+            uploadFilename = String.format("%s_%s.%s", DateUtil.formatDate(new Date()), uuid, FileUtil.getSuffix(originFilename));
+        } else {
+            // 截取?前面的部分
+            String beforeQuestionMark = inputSource.toString().substring(0, inputSource.toString().indexOf('?'));
+            // 正则表达式匹配f参数的值
+            Pattern pattern = Pattern.compile("(?<=\\bf=)[^&]*");
+            Matcher matcher = pattern.matcher(beforeQuestionMark);
+            if(matcher.find()){
+                uploadFilename = String.format("%s_%s.%s", DateUtil.formatDate(new Date()), uuid, matcher.group());
+            }else {
+                throw new BusinessException(ErrorCodeEnum.PARAMS_ERROR, "获取图片格式失败！");
+            }
+        }
         // 定义上传路径
         String uploadPath = String.format("%s/%s", uploadPathPrefix, uploadFilename);
         File file = null;
