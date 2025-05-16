@@ -41,6 +41,11 @@ import javax.annotation.Resource;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -394,21 +399,26 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         if (!userService.isAdmin(loginUser)) {
             throw new BusinessException(ErrorCodeEnum.NO_AUTH_ERROR);
         }
+
         String searchText = pictureBatchUploadDTO.getSearchText();
         Integer batchSize = pictureBatchUploadDTO.getBatchSize();
-        // 判断抓取的数量，最多30条
+        AtomicInteger submittedCount = new AtomicInteger(0);
+
+// 判断抓取的数量，最多30条
         if (batchSize > 30) {
             throw new BusinessException(ErrorCodeEnum.PARAMS_ERROR, "最多上传30张图片");
         }
-        String fetchRul = String.format("https://cn.bing.com/images/async?q=%s&mmasync=1", searchText);
+
+        String fetchUrl = String.format("https://cn.bing.com/images/async?q=%s&mmasync=1", searchText);
         Document document;
         try {
-            document = Jsoup.connect(fetchRul).get();
+            document = Jsoup.connect(fetchUrl).get();
         } catch (IOException e) {
             log.error("批量抓取获取页面失败！", e);
             throw new BusinessException(ErrorCodeEnum.OPERATION_ERROR, "批量抓取获取页面失败！");
         }
-        // 解析内容
+
+// 解析内容
         Element firstEle = document.getElementsByClass("dgControl").first();
         if (Objects.isNull(firstEle)) {
             throw new BusinessException(ErrorCodeEnum.OPERATION_ERROR, "获取首个元素失败！");
@@ -417,39 +427,65 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         if (CollUtil.isEmpty(elements)) {
             throw new BusinessException(ErrorCodeEnum.OPERATION_ERROR, "获取图片为空！");
         }
-        int uploadCount = 0;
+
+// 创建固定大小的线程池（根据CPU核心数或任务类型调整）
+       final int THREAD_POOL_SIZE = 16; // 可根据实际情况动态设置
+        ExecutorService executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
+
+        List<Future<Void>> futures = new ArrayList<>();
+        AtomicInteger uploadCount = new AtomicInteger(0); // 线程安全计数器
+
         for (Element element : elements) {
+            if (submittedCount.get() >= batchSize) {
+                break;
+            }
             String fileUrl = element.attr("src");
             if (StrUtil.isBlank(fileUrl)) {
                 log.info("当前链接为空，已跳过: {}", fileUrl);
                 continue;
             }
-            // 处理图片上传地址，防止出现转义问题
+
+            // 处理URL参数部分
             int questionMarkIndex = fileUrl.indexOf("?");
             if (questionMarkIndex > -1) {
                 fileUrl = fileUrl.substring(0, questionMarkIndex);
             }
+            final String fileUrlTemp = fileUrl;
+            // 提交任务到线程池
+            futures.add(executorService.submit(() -> {
+                try {
+                    PictureUploadDTO pictureUploadDTO = new PictureUploadDTO();
+                    pictureUploadDTO.setName(searchText + "-" + RandomUtil.randomString(10));
+                    PictureVO pictureVO = this.uploadPicture(fileUrlTemp, pictureUploadDTO, loginUser).getData();
+                    log.info("图片上传成功, id = {}", pictureVO.getId());
+
+                    Picture picture = new Picture();
+                    picture.setId(pictureVO.getId());
+                    picture.setIntroduction("抓取图片");
+                    picture.setCategory("抓图");
+                    picture.setTags("[\"网页\"]");
+                    this.updateById(picture);
+                    uploadCount.incrementAndGet(); // 成功后计数+1
+                } catch (Exception e) {
+                    log.error("图片上传失败: {}", fileUrlTemp, e);
+                }
+                return null;
+            }));
+            submittedCount.incrementAndGet();
+        }
+
+// 等待所有任务完成
+        for (Future<Void> future : futures) {
             try {
-                PictureUploadDTO pictureUploadDTO = new PictureUploadDTO();
-                pictureUploadDTO.setName(searchText + "-" + RandomUtil.randomString(10));
-                PictureVO pictureVO = this.uploadPicture(fileUrl, pictureUploadDTO, loginUser).getData();
-                log.info("图片上传成功, id = {}", pictureVO.getId());
-                Picture picture = new Picture();
-                picture.setId(pictureVO.getId());
-                picture.setIntroduction("抓取图片");
-                picture.setCategory("抓图");
-                picture.setTags("[\"网页\"]");
-                this.updateById(picture);
-                uploadCount++;
-            } catch (Exception e) {
-                log.error("图片上传失败", e);
-                continue;
-            }
-            if (uploadCount >= pictureBatchUploadDTO.getBatchSize()) {
-                break;
+                future.get(); // 可以加超时时间
+            } catch (InterruptedException | ExecutionException e) {
+                log.error("线程执行异常", e);
+                Thread.currentThread().interrupt(); // 恢复中断状态
             }
         }
-        return uploadCount;
+// 关闭线程池
+        executorService.shutdownNow(); // 或者用 shutdown() 等待完成
+        return uploadCount.get();
     }
 }
 
