@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -17,7 +18,12 @@ import java.io.Serializable;
 @ApiModel(value = "图片上传DTO")
 public class PictureUploadDTO implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 5525856739220528439L;
+
+    @ApiModelProperty(value = "图片id")
+    private Long id;
+
     /**
      * 图片地址
      */

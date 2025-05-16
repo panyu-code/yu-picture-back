@@ -15,5 +15,5 @@ class YuPictureBackApplicationTests {
     private PictureMapper pictureMapper;
    @Test
     void contextLoads() {
-    }
+   }
 }

@@ -3,10 +3,7 @@ package com.panyu.yupictureback.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.panyu.yupictureback.annotation.AuthCheck;
 import com.panyu.yupictureback.common.ResponseResult;
-import com.panyu.yupictureback.domain.dto.picture.PictureEditDTO;
-import com.panyu.yupictureback.domain.dto.picture.PictureQueryDTO;
-import com.panyu.yupictureback.domain.dto.picture.PictureReviewDTO;
-import com.panyu.yupictureback.domain.dto.picture.PictureUpdateDTO;
+import com.panyu.yupictureback.domain.dto.picture.*;
 import com.panyu.yupictureback.domain.entity.Picture;
 import com.panyu.yupictureback.domain.vo.picture.PictureTagCategoryVO;
 import com.panyu.yupictureback.domain.vo.picture.PictureVO;
@@ -43,29 +40,29 @@ public class PictureController {
      * 图片上传（文件）
      *
      * @param multipartFile
-     * @param pictureId
+     * @param pictureUploadDTO
      * @return
      */
     @ApiOperation("图片上传（文件）")
     @PostMapping("/upload-file")
     public ResponseResult<PictureVO> uploadPicture(@RequestPart("file") MultipartFile multipartFile,
-                                                   Long pictureId) {
+                                                   PictureUploadDTO pictureUploadDTO) {
         UserLoginVO loginUser = UserContextUtil.getCurrentUser();
-        return pictureService.uploadPicture(multipartFile, pictureId, loginUser);
+        return pictureService.uploadPicture(multipartFile, pictureUploadDTO, loginUser);
     }
 
     /**
      * 图片上传（url)
      *
      * @param url
-     * @param pictureId
+     * @param pictureUploadDTO
      * @return
      */
     @ApiOperation("图片上传（url)")
     @PostMapping("/upload-url")
-    public ResponseResult<PictureVO> uploadPictureByUrl(String url, Long pictureId) {
+    public ResponseResult<PictureVO> uploadPictureByUrl(String url,  PictureUploadDTO pictureUploadDTO) {
         UserLoginVO loginUser = UserContextUtil.getCurrentUser();
-        return pictureService.uploadPicture(url, pictureId, loginUser);
+        return pictureService.uploadPicture(url, pictureUploadDTO, loginUser);
     }
 
     /**
@@ -183,5 +180,20 @@ public class PictureController {
         return ResultUtil.success(true);
     }
 
+    /**
+     * 批量抓取图片
+     *
+     * @param pictureBatchUploadDTO
+     * @return
+     */
+    @ApiOperation("批量上传图片")
+    @PostMapping("/batchUpload")
+    @AuthCheck(mustRole = UserRoleEnum.ADMIN)
+    public ResponseResult<Integer> batchUpload(@RequestBody PictureBatchUploadDTO pictureBatchUploadDTO) {
+        ThrowUtil.throwIf(pictureBatchUploadDTO == null, ErrorCodeEnum.PARAMS_ERROR);
+        UserLoginVO loginUser = UserContextUtil.getCurrentUser();
+        Integer count = pictureService.batchUploadPicture(pictureBatchUploadDTO, loginUser);
+        return ResultUtil.success(count);
+    }
 
 }

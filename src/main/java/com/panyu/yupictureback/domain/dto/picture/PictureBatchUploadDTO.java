@@ -25,4 +25,5 @@ public class PictureBatchUploadDTO implements Serializable {
 
     @ApiModelProperty(value = "批量上传数量")
     private Integer batchSize = 10;
+
 }

@@ -20,11 +20,11 @@ public interface PictureService extends IService<Picture> {
      * 上传图片
      *
      * @param inputSource
-     * @param pictureId
+     * @param pictureUploadDTO
      * @param loginUser
      * @return
      */
-    ResponseResult<PictureVO> uploadPicture(Object inputSource, Long pictureId, UserLoginVO loginUser);
+    ResponseResult<PictureVO> uploadPicture(Object inputSource, PictureUploadDTO pictureUploadDTO, UserLoginVO loginUser);
 
 
     /**

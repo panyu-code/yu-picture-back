@@ -3,6 +3,8 @@ package com.panyu.yupictureback.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.RandomUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -57,12 +59,12 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
     private UrlPictureUpload urlPictureUpload;
 
     @Override
-    public ResponseResult<PictureVO> uploadPicture(Object inputSource, Long pictureId, UserLoginVO loginUser) {
+    public ResponseResult<PictureVO> uploadPicture(Object inputSource, PictureUploadDTO pictureUploadDTO, UserLoginVO loginUser) {
         ThrowUtil.throwIf(loginUser == null, ErrorCodeEnum.NO_AUTH_ERROR);
         ThrowUtil.throwIf(inputSource == null, ErrorCodeEnum.PARAMS_ERROR, "输入源不能为空");
         // 如果是更新图片，需要校验图片是否存在
-        if (pictureId != null) {
-            Picture oldPicture = this.getById(pictureId);
+        if (pictureUploadDTO != null && pictureUploadDTO.getId() != null) {
+            Picture oldPicture = this.getById(pictureUploadDTO.getId());
             ThrowUtil.throwIf(oldPicture == null, ErrorCodeEnum.NOT_FOUND_ERROR, "图片不存在");
             // 仅本人或管理员可编辑
             if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
@@ -74,12 +76,15 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         // 上传图片（根据类型选择不同的上传方式）
         PictureUploadTemplate pictureUploadTemplate = inputSource instanceof MultipartFile
                 ? filePictureUpload : urlPictureUpload;
-        boolean fileFlag = inputSource instanceof MultipartFile;
-        PictureUploadDTO uploadPictureResult = pictureUploadTemplate.uploadPicture(inputSource, uploadPathPrefix,fileFlag);
+        PictureUploadDTO uploadPictureResult = pictureUploadTemplate.uploadPicture(inputSource, uploadPathPrefix);
         // 封装图片实体
         Picture picture = new Picture();
         picture.setUrl(uploadPictureResult.getUrl());
-        picture.setName(uploadPictureResult.getName());
+        if (pictureUploadDTO != null && StrUtil.isNotBlank(pictureUploadDTO.getName())) {
+            picture.setName(pictureUploadDTO.getName());
+        } else {
+            picture.setName(uploadPictureResult.getName());
+        }
         picture.setSize(uploadPictureResult.getSize());
         picture.setWidth(uploadPictureResult.getWidth());
         picture.setHeight(uploadPictureResult.getHeight());
@@ -88,8 +93,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         picture.setUserId(loginUser.getId());
         this.fillReviewParams(picture, loginUser);
         // 判断是新增还是修改
-        if (pictureId != null) {
-            picture.setId(pictureId);
+        if (pictureUploadDTO != null && pictureUploadDTO.getId() != null) {
+            picture.setId(pictureUploadDTO.getId());
         }
         boolean result = this.saveOrUpdate(picture);
         ThrowUtil.throwIf(!result, ErrorCodeEnum.OPERATION_ERROR, "数据库操作失败！");
@@ -215,8 +220,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
     @Override
     public ResponseResult<PictureTagCategoryVO> listPictureTagCategory() {
         PictureTagCategoryVO pictureTagCategoryVO = new PictureTagCategoryVO();
-        List<String> tagList = Arrays.asList("热门", "搞笑", "生活", "高清", "艺术", "校园", "背景", "简历", "创意");
-        List<String> categoryList = Arrays.asList("模板", "电商", "表情包", "素材", "海报");
+        List<String> tagList = Arrays.asList("热门", "搞笑", "生活", "高清", "艺术", "校园", "背景", "简历", "创意", "网页");
+        List<String> categoryList = Arrays.asList("模板", "电商", "表情包", "素材", "海报", "抓图");
         pictureTagCategoryVO.setTagList(tagList);
         pictureTagCategoryVO.setCategoryList(categoryList);
         return ResultUtil.success(pictureTagCategoryVO);
@@ -408,13 +413,48 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         if (Objects.isNull(firstEle)) {
             throw new BusinessException(ErrorCodeEnum.OPERATION_ERROR, "获取首个元素失败！");
         }
-        Elements elements = firstEle.select("img .ming");
+        Elements elements = firstEle.select("img.mimg");
         if (CollUtil.isEmpty(elements)) {
             throw new BusinessException(ErrorCodeEnum.OPERATION_ERROR, "获取图片为空！");
         }
-        return 0;
+        int uploadCount = 0;
+        for (Element element : elements) {
+            String fileUrl = element.attr("src");
+            if (StrUtil.isBlank(fileUrl)) {
+                log.info("当前链接为空，已跳过: {}", fileUrl);
+                continue;
+            }
+            // 处理图片上传地址，防止出现转义问题
+            int questionMarkIndex = fileUrl.indexOf("?");
+            if (questionMarkIndex > -1) {
+                fileUrl = fileUrl.substring(0, questionMarkIndex);
+            }
+            try {
+                PictureUploadDTO pictureUploadDTO = new PictureUploadDTO();
+                pictureUploadDTO.setName(searchText + "-" + RandomUtil.randomString(10));
+                PictureVO pictureVO = this.uploadPicture(fileUrl, pictureUploadDTO, loginUser).getData();
+                log.info("图片上传成功, id = {}", pictureVO.getId());
+                Picture picture = new Picture();
+                picture.setId(pictureVO.getId());
+                picture.setIntroduction("抓取图片");
+                picture.setCategory("抓图");
+                picture.setTags("[\"网页\"]");
+                this.updateById(picture);
+                uploadCount++;
+            } catch (Exception e) {
+                log.error("图片上传失败", e);
+                continue;
+            }
+            if (uploadCount >= pictureBatchUploadDTO.getBatchSize()) {
+                break;
+            }
+        }
+        return uploadCount;
     }
 }
+
+
+
 
 
 
